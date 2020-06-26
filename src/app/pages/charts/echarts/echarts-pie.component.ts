@@ -1,5 +1,7 @@
 import { AfterViewInit, Component, OnDestroy } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
+import { CasosEnArgentinaService } from '../../../services/casos-en-argentina.service';
+import ICase from '../../../interfaces/ICase';
 
 @Component({
   selector: 'ngx-echarts-pie',
@@ -10,15 +12,36 @@ import { NbThemeService } from '@nebular/theme';
 export class EchartsPieComponent implements AfterViewInit, OnDestroy {
   options: any = {};
   themeSubscription: any;
+  cantCasosEnMarzo: number = 0;
+  cantCasosEnAbril: number = 0; 
+  cantCasosEnMayo: number = 0;
+  cantCasosEnJunio: number = 0;
 
-  constructor(private theme: NbThemeService) {
-  }
+  constructor(private theme: NbThemeService, private casosEnArgentinaService: CasosEnArgentinaService) {}
 
   ngAfterViewInit() {
     this.themeSubscription = this.theme.getJsTheme().subscribe(config => {
 
-      const colors = config.variables;
-      const echarts: any = config.variables.echarts;
+      this.casosEnArgentinaService.getAll().subscribe((casosEnArgentina: Array<ICase>) => {
+        console.log('CASOS EN ARGENTINA: ', casosEnArgentina);
+        // 29 dias para marzo
+        // empieza el dia 3 -> elemento 0
+        console.log('ultimo caso en marzo:', casosEnArgentina[28]);
+        this.cantCasosEnMarzo = casosEnArgentina[28].Cases - casosEnArgentina[0].Cases;
+        console.log('cant. casos marzo:', this.cantCasosEnMarzo);
+        // 30 dias para abril
+        console.log('ultimo caso en abril:', casosEnArgentina[58]);
+        this.cantCasosEnAbril = casosEnArgentina[58].Cases - casosEnArgentina[29].Cases;
+        console.log('cant. casos abril:', this.cantCasosEnAbril);
+        // 31 dias para mayo
+        console.log('ultimo caso en mayo:', casosEnArgentina[89]);
+        this.cantCasosEnMayo = casosEnArgentina[89].Cases - casosEnArgentina[59].Cases;
+        console.log('cant. casos mayo:', this.cantCasosEnMayo);
+          //Domingo 22 de junio
+        console.log('ultimo caso en mayo:', casosEnArgentina[110]);
+        this.cantCasosEnJunio = casosEnArgentina[110].Cases - casosEnArgentina[89].Cases;
+        console.log('cant. casos mayo:', this.cantCasosEnJunio);
+
 
       this.options = {
         backgroundColor: echarts.bg,
@@ -30,23 +53,23 @@ export class EchartsPieComponent implements AfterViewInit, OnDestroy {
         legend: {
           orient: 'vertical',
           left: 'left',
-          data: ['USA', 'Germany', 'France', 'Canada', 'Russia'],
+          data: ['Marzo', 'Abril', 'Mayo', 'Junio'],
           textStyle: {
             color: echarts.textColor,
           },
         },
         series: [
           {
-            name: 'Countries',
+            name: 'Casos',
             type: 'pie',
             radius: '80%',
             center: ['50%', '50%'],
             data: [
-              { value: 335, name: 'Germany' },
-              { value: 310, name: 'France' },
-              { value: 234, name: 'Canada' },
-              { value: 135, name: 'Russia' },
-              { value: 1548, name: 'USA' },
+              { value: this.cantCasosEnMarzo, name: 'Marzo' },
+              { value: this.cantCasosEnAbril, name: 'Abril' },
+              { value: this.cantCasosEnMayo, name: 'Mayo' },
+              { value: this.cantCasosEnJunio, name: 'Junio' },
+              
             ],
             itemStyle: {
               emphasis: {
@@ -72,8 +95,17 @@ export class EchartsPieComponent implements AfterViewInit, OnDestroy {
           },
         ],
       };
+    }, (error: Error) => {
+      console.log('ERROR: ', error);
+
     });
-  }
+
+    const colors = config.variables;
+    const echarts: any = config.variables.echarts;
+    
+  });
+}
+
 
   ngOnDestroy(): void {
     this.themeSubscription.unsubscribe();
